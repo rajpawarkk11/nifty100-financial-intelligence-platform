@@ -1,0 +1,6 @@
+venv/
+**pycache**/
+*.db
+.ipynb_checkpoints/
+.env
+output/
