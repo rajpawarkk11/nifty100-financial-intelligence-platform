@@ -127,3 +127,111 @@ def roce_status(
         return "Average"
 
     return "Weak"
+# ==============================
+# DAY 09 - LEVERAGE & EFFICIENCY
+# ==============================
+
+def debt_to_equity(
+    borrowings: float,
+    equity_capital: float,
+    reserves: float
+):
+    """
+    Debt to Equity Ratio
+
+    Return 0 if company is debt free.
+    Return None if equity <= 0.
+    """
+
+    if borrowings == 0:
+        return 0
+
+    equity = equity_capital + reserves
+
+    if equity <= 0:
+        return None
+
+    return borrowings / equity
+
+
+def high_leverage_flag(
+    debt_equity: float,
+    broad_sector: str
+):
+    """
+    True if D/E > 5 and NOT Financials.
+    """
+
+    if debt_equity is None:
+        return False
+
+    if is_financial_company(broad_sector):
+        return False
+
+    return debt_equity > 5
+
+
+def interest_coverage_ratio(
+    operating_profit: float,
+    other_income: float,
+    interest: float
+):
+    """
+    Interest Coverage Ratio
+    """
+
+    if interest == 0:
+        return None
+
+    return (operating_profit + other_income) / interest
+
+
+def icr_label(
+    interest: float
+):
+    """
+    Debt Free label.
+    """
+
+    if interest == 0:
+        return "Debt Free"
+
+    return ""
+
+
+def icr_warning(
+    icr
+):
+    """
+    Warning if ICR < 1.5
+    """
+
+    if icr is None:
+        return False
+
+    return icr < 1.5
+
+
+def net_debt(
+    borrowings: float,
+    investments: float
+):
+    """
+    Net Debt
+    """
+
+    return borrowings - investments
+
+
+def asset_turnover(
+    sales: float,
+    total_assets: float
+):
+    """
+    Asset Turnover
+    """
+
+    if total_assets == 0:
+        return None
+
+    return sales / total_assets
