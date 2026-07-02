@@ -157,9 +157,27 @@ print("KPI calculations completed.")
 # CAGR CALCULATIONS
 # =====================================================
 
-df["revenue_cagr_5yr"] = pd.NA
-df["pat_cagr_5yr"] = pd.NA
-df["eps_cagr_5yr"] = pd.NA
+for col in [
+    "revenue_cagr_3yr",
+    "revenue_cagr_5yr",
+    "revenue_cagr_10yr",
+    "pat_cagr_3yr",
+    "pat_cagr_5yr",
+    "pat_cagr_10yr",
+    "eps_cagr_3yr",
+    "eps_cagr_5yr",
+    "eps_cagr_10yr",
+    "revenue_cagr_3yr_flag",
+    "revenue_cagr_5yr_flag",
+    "revenue_cagr_10yr_flag",
+    "pat_cagr_3yr_flag",
+    "pat_cagr_5yr_flag",
+    "pat_cagr_10yr_flag",
+    "eps_cagr_3yr_flag",
+    "eps_cagr_5yr_flag",
+    "eps_cagr_10yr_flag",
+]:
+    df[col] = pd.NA
 
 annual = (
     df[df["year_num"].notna()]
@@ -167,38 +185,50 @@ annual = (
     .copy()
 )
 
+periods = [3, 5, 10]
+
 for company, grp in annual.groupby("company_id"):
 
     grp = grp.reset_index()
 
-    if len(grp) < 6:
-        continue
+    for years in periods:
 
-    for i in range(5, len(grp)):
+        if len(grp) < years + 1:
+            continue
 
-        idx = grp.loc[i, "index"]
+        for i in range(years, len(grp)):
 
-        rev, _ = revenue_cagr(
-            grp.loc[i - 5, "sales"],
-            grp.loc[i, "sales"],
-            5,
-        )
+            idx = grp.loc[i, "index"]
 
-        pat, _ = pat_cagr(
-            grp.loc[i - 5, "net_profit"],
-            grp.loc[i, "net_profit"],
-            5,
-        )
+            rev, rev_flag = revenue_cagr(
+                grp.loc[i-years, "sales"],
+                grp.loc[i, "sales"],
+                years,
+            )
 
-        eps_val, _ = eps_cagr(
-            grp.loc[i - 5, "eps"],
-            grp.loc[i, "eps"],
-            5,
-        )
+            pat, pat_flag = pat_cagr(
+                grp.loc[i-years, "net_profit"],
+                grp.loc[i, "net_profit"],
+                years,
+            )
 
-        df.at[idx, "revenue_cagr_5yr"] = rev
-        df.at[idx, "pat_cagr_5yr"] = pat
-        df.at[idx, "eps_cagr_5yr"] = eps_val
+            eps, eps_flag = eps_cagr(
+                grp.loc[i-years, "eps"],
+                grp.loc[i, "eps"],
+                years,
+            )
+
+            df.at[idx, f"revenue_cagr_{years}yr"] = rev
+            df.at[idx, f"pat_cagr_{years}yr"] = pat
+            df.at[idx, f"eps_cagr_{years}yr"] = eps
+
+            df.at[idx, f"revenue_cagr_{years}yr_flag"] = rev_flag
+            df.at[idx, f"pat_cagr_{years}yr_flag"] = pat_flag
+            df.at[idx, f"eps_cagr_{years}yr_flag"] = eps_flag
+
+print("=" * 60)
+print("3Y / 5Y / 10Y CAGR Completed")
+print("=" * 60)
 
 # =====================================================
 # COMPOSITE SCORE
@@ -221,32 +251,77 @@ cursor.execute("DELETE FROM financial_ratios")
 cols = [
     "company_id",
     "year",
+
     "net_profit_margin_pct",
     "operating_profit_margin_pct",
     "return_on_equity_pct",
+
     "debt_to_equity",
     "interest_coverage",
     "asset_turnover",
+
     "free_cash_flow_cr",
     "capex_cr",
+
     "earnings_per_share",
     "book_value_per_share",
     "dividend_payout_ratio_pct",
+
     "total_debt_cr",
     "cash_from_operations_cr",
+
+    "revenue_cagr_3yr",
     "revenue_cagr_5yr",
+    "revenue_cagr_10yr",
+
+    "pat_cagr_3yr",
     "pat_cagr_5yr",
+    "pat_cagr_10yr",
+
+    "eps_cagr_3yr",
     "eps_cagr_5yr",
+    "eps_cagr_10yr",
+
+    "revenue_cagr_3yr_flag",
+    "revenue_cagr_5yr_flag",
+    "revenue_cagr_10yr_flag",
+
+    "pat_cagr_3yr_flag",
+    "pat_cagr_5yr_flag",
+    "pat_cagr_10yr_flag",
+
+    "eps_cagr_3yr_flag",
+    "eps_cagr_5yr_flag",
+    "eps_cagr_10yr_flag",
+
     "composite_quality_score",
 ]
-
 df[cols].to_sql(
     "financial_ratios",
     conn,
     if_exists="append",
     index=False,
 )
+print("=" * 60)
+print("CAGR Verification")
+print("=" * 60)
 
+verify = pd.read_sql("""
+SELECT
+COUNT(*) AS rows,
+COUNT(revenue_cagr_3yr) AS rev3,
+COUNT(revenue_cagr_5yr) AS rev5,
+COUNT(revenue_cagr_10yr) AS rev10,
+COUNT(pat_cagr_3yr) AS pat3,
+COUNT(pat_cagr_5yr) AS pat5,
+COUNT(pat_cagr_10yr) AS pat10,
+COUNT(eps_cagr_3yr) AS eps3,
+COUNT(eps_cagr_5yr) AS eps5,
+COUNT(eps_cagr_10yr) AS eps10
+FROM financial_ratios
+""", conn)
+
+print(verify)
 count = pd.read_sql(
     "SELECT COUNT(*) AS cnt FROM financial_ratios",
     conn,
