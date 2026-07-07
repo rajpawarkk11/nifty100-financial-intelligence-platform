@@ -16,7 +16,6 @@ def load_config():
     with open(CONFIG_PATH, "r") as f:
         return yaml.safe_load(f)
 
-
 def load_financial_data():
 
     conn = sqlite3.connect("db/nifty100.db")
@@ -25,18 +24,37 @@ def load_financial_data():
         """
         SELECT
             fr.*,
-            s.broad_sector
+
+            s.broad_sector,
+
+            mc.market_cap_crore,
+            mc.pe_ratio,
+            mc.pb_ratio,
+            mc.dividend_yield_pct
+
         FROM financial_ratios fr
+
         LEFT JOIN sectors s
         ON fr.company_id = s.company_id
+
+        LEFT JOIN market_cap mc
+        ON fr.company_id = mc.company_id
+        AND substr(fr.year, -4) = mc.year
         """,
         conn,
     )
 
     conn.close()
 
-    return df
 
+    # use latest available year only for screeners
+    df = (
+    df.sort_values("year")
+    .groupby("company_id")
+    .tail(1)
+)
+
+    return df
 
 def apply_filters(
     df,
