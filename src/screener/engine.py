@@ -1,11 +1,12 @@
 """
-Sprint 3 - Day 15
+Sprint 3 - Day 15/16
 Financial Screener Engine
 """
 
 import sqlite3
 import yaml
 import pandas as pd
+import numpy as np
 
 
 CONFIG_PATH = "config/screener_config.yaml"
@@ -15,6 +16,7 @@ def load_config():
 
     with open(CONFIG_PATH, "r") as f:
         return yaml.safe_load(f)
+
 
 def load_financial_data():
 
@@ -47,21 +49,52 @@ def load_financial_data():
     conn.close()
 
 
-    # use latest available year only for screeners
+    # ====================================
+    # D/E Declining Year-over-Year Logic
+    # ====================================
+
+    df["year_number"] = (
+        df["year"]
+        .astype(str)
+        .str.extract(r"(\d{4})")
+        .astype(float)
+    )
+
+    df = df.sort_values(
+        [
+            "company_id",
+            "year_number"
+        ]
+    )
+
+    df["previous_debt_to_equity"] = (
+        df.groupby("company_id")
+        ["debt_to_equity"]
+        .shift(1)
+    )
+
+    df["debt_equity_declining"] = (
+        df["debt_to_equity"]
+        <
+        df["previous_debt_to_equity"]
+    )
+
+
+    # Latest year only for screeners
+
     df = (
-    df.sort_values("year")
-    .groupby("company_id")
-    .tail(1)
-)
+        df.sort_values("year_number")
+        .groupby("company_id")
+        .tail(1)
+    )
 
     return df
 
-def apply_filters(
-    df,
-    filters
-):
+
+def apply_filters(df, filters):
 
     result = df.copy()
+
 
     for key, value in filters.items():
 
@@ -69,14 +102,19 @@ def apply_filters(
         operator = value["operator"]
         threshold = value.get("value")
 
+
         if threshold is None:
             continue
+
 
         if column not in result.columns:
             continue
 
 
-        # Financial companies skip D/E filter
+        # ====================================
+        # Financial sector D/E carve-out
+        # ====================================
+
         if column == "debt_to_equity":
 
             mask = (
@@ -88,13 +126,16 @@ def apply_filters(
 
             non_financial = result[~mask]
 
+
             if operator == "<=":
+
                 non_financial = (
                     non_financial[
                         non_financial[column]
                         <= threshold
                     ]
                 )
+
 
             result = pd.concat(
                 [
@@ -106,7 +147,10 @@ def apply_filters(
             continue
 
 
-        # Debt free ICR handling
+        # ====================================
+        # Debt Free ICR handling
+        # ====================================
+
         if column == "interest_coverage":
 
             result[column] = (
@@ -117,16 +161,32 @@ def apply_filters(
 
         if operator == ">=":
 
-            result = result[
-                result[column] >= threshold
-            ]
+            result = (
+                result[
+                    result[column]
+                    >= threshold
+                ]
+            )
 
 
         elif operator == "<=":
 
-            result = result[
-                result[column] <= threshold
-            ]
+            result = (
+                result[
+                    result[column]
+                    <= threshold
+                ]
+            )
+
+
+        elif operator == "==":
+
+            result = (
+                result[
+                    result[column]
+                    == threshold
+                ]
+            )
 
 
     if "composite_quality_score" in result.columns:
@@ -140,15 +200,13 @@ def apply_filters(
     return result
 
 
-def run_screener(
-    custom_filters
-):
+def run_screener(custom_filters):
 
     df = load_financial_data()
 
     return apply_filters(
         df,
-        custom_filters,
+        custom_filters
     )
 
 
@@ -159,8 +217,19 @@ if __name__ == "__main__":
     df = load_financial_data()
 
     print("=" * 50)
-    print("Companies Loaded:", df["company_id"].nunique())
-    print("Rows Loaded:", len(df))
-    print("Available Filters:",
-          len(config["filters"]))
+    print(
+        "Companies Loaded:",
+        df["company_id"].nunique()
+    )
+
+    print(
+        "Rows Loaded:",
+        len(df)
+    )
+
+    print(
+        "Available Filters:",
+        len(config["filters"])
+    )
+
     print("=" * 50)
