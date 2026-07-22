@@ -32,18 +32,32 @@ if profile.empty:
 
 company = profile.iloc[0]
 
-st.header(company["company_name"])
+header_left, header_right = st.columns([1, 4])
 
-col1, col2, col3 = st.columns(3)
+with header_left:
+    if company["company_logo"]:
+        st.image(company["company_logo"], width=120)
 
-with col1:
-    st.metric("ROE", company["roe_percentage"])
+with header_right:
+    st.title(company["company_name"])
 
-with col2:
-    st.metric("ROCE", company["roce_percentage"])
+    st.caption(
+        f"{company['broad_sector']} • {company['market_cap_category']}"
+    )
 
-with col3:
-    st.metric("Book Value", company["book_value"])
+    button_col1, button_col2, button_col3 = st.columns(3)
+
+with button_col1:
+        if company["website"]:
+            st.link_button("🌐 Website", company["website"])
+
+with button_col2:
+        if company["nse_profile"]:
+            st.link_button("📈 NSE Profile", company["nse_profile"])
+
+with button_col3:
+        if company["bse_profile"]:
+            st.link_button("📊 BSE Profile", company["bse_profile"])
 
 st.divider()
 

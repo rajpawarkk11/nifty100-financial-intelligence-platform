@@ -1,31 +1,18 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Nifty 100 Analytics",
-    page_icon="📈",
+    page_title="Nifty100 Financial Intelligence Platform",
+    page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-st.logo("https://streamlit.io/images/brand/streamlit-logo-primary-colormark-darktext.png")
-
-st.title("📊 Nifty 100 Financial Intelligence Platform")
+st.title("📊 Nifty100 Financial Intelligence Platform")
 
 st.markdown("""
-Welcome to the **Nifty 100 Financial Intelligence Dashboard**.
+Welcome to the **Nifty100 Financial Intelligence Dashboard**.
 
-### Available Dashboard Modules
-
-- 🏠 Home
-- 🏢 Company Profile
-- 🔍 Screener
-- 🤝 Peer Comparison
-- 📈 Trend Analysis
-- 🏭 Sector Analysis
-- 💰 Capital Allocation
-- 📄 Annual Reports
-
-Select a page from the left sidebar.
+Use the **left sidebar** to navigate through the modules.
 """)
 
-st.info("Sprint 4 • Dashboard Scaffold Initialized Successfully")
+st.success("Dashboard Loaded Successfully 🚀")

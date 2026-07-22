@@ -18,3 +18,12 @@ jupyter
 black
 ruff
 pre-commit
+streamlit
+plotly
+pandas
+numpy
+streamlit-option-menu
+streamlit-aggrid
+streamlit-extras
+streamlit-card
+streamlit-lottie
