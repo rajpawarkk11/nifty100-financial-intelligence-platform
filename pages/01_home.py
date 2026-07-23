@@ -13,19 +13,28 @@ from src.dashboard.utils.db import (
 # LOAD DATA
 # ----------------------------------------------------
 
-years = get_available_years()["year"].astype(str).tolist()
+years = (
+    get_available_years()["year"]
+    .astype(int)
+    .sort_values()
+    .tolist()
+)
+
+# Show only 2019–2024
+years = [year for year in years if 2019 <= year <= 2024]
 
 selected_year = st.sidebar.selectbox(
     "📅 Financial Year",
     years,
+    index=len(years) - 1,   # Default = 2024
     key="home_year_select"
 )
 
-summary = get_home_summary(selected_year)
+summary = get_home_summary(str(selected_year))
 
 sector_df = get_sector_breakdown()
 
-top5 = get_top_quality_companies(selected_year)
+top5 = get_top_quality_companies(str(selected_year))
 
 # ----------------------------------------------------
 # CSS
