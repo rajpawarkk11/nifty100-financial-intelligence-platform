@@ -97,6 +97,26 @@ df["return_on_equity_pct"] = df.apply(
     axis=1,
 )
 
+print("=" * 70)
+print("TOP ROE DEBUG")
+print("=" * 70)
+
+debug = df[
+    [
+        "company_id",
+        "year",
+        "net_profit",
+        "equity_capital",
+        "reserves",
+        "return_on_equity_pct",
+    ]
+].sort_values(
+    "return_on_equity_pct",
+    ascending=False
+)
+
+print(debug.head(20))
+
 df["debt_to_equity"] = df.apply(
     lambda r: debt_to_equity(
         r["borrowings"],

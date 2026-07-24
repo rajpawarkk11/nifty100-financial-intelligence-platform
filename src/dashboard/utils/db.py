@@ -410,3 +410,131 @@ def get_top_quality_companies(year):
         query,
         params=(f"%{year}",)
     )
+
+@st.cache_data
+def get_screener_data():
+    """
+    Returns the latest available financial data for all companies
+    required by the Stock Screener page.
+    """
+
+    query = """
+   WITH latest_year AS (
+    SELECT
+        company_id,
+        MAX(year) AS latest_year
+    FROM financial_ratios
+    GROUP BY company_id
+),
+
+latest_market_cap AS (
+    SELECT
+        company_id,
+        MAX(year) AS latest_year
+    FROM market_cap
+    GROUP BY company_id
+)
+
+    SELECT
+        c.id,
+        c.company_name,
+
+        s.broad_sector,
+        s.sub_sector,
+        s.market_cap_category,
+
+        fr.year,
+
+        fr.return_on_equity_pct,
+        fr.operating_profit_margin_pct,
+        fr.debt_to_equity,
+        fr.interest_coverage,
+        fr.free_cash_flow_cr,
+
+        fr.revenue_cagr_5yr,
+        fr.pat_cagr_5yr,
+        fr.composite_quality_score,
+
+        mc.market_cap_crore,
+        mc.pe_ratio,
+        mc.pb_ratio,
+        mc.dividend_yield_pct
+
+    FROM companies c
+
+    INNER JOIN latest_year ly
+        ON c.id = ly.company_id
+
+    INNER JOIN financial_ratios fr
+        ON fr.company_id = ly.company_id
+       AND fr.year = ly.latest_year
+
+    LEFT JOIN sectors s
+        ON s.company_id = c.id
+
+    LEFT JOIN latest_market_cap lm
+    ON lm.company_id = c.id
+
+LEFT JOIN market_cap mc
+    ON mc.company_id = lm.company_id
+   AND mc.year = lm.latest_year
+
+    ORDER BY c.company_name;
+    """
+
+    return run_query(query)
+
+# --------------------------------------------------
+# Peer Comparison Helpers
+# --------------------------------------------------
+
+@st.cache_data(ttl=600)
+def get_peer_groups():
+    query = """
+    SELECT DISTINCT
+        peer_group_name
+    FROM peer_groups
+    WHERE peer_group_name IS NOT NULL
+    ORDER BY peer_group_name;
+    """
+    return run_query(query)
+
+
+@st.cache_data(ttl=600)
+def get_peer_comparison(group_name):
+    query = """
+    SELECT
+        c.id,
+    c.company_name,
+
+    pg.peer_group_name,
+    pg.is_benchmark,
+
+    fr.return_on_equity_pct,
+    fr.operating_profit_margin_pct,
+    fr.debt_to_equity,
+    fr.interest_coverage,
+    fr.revenue_cagr_5yr,
+    fr.pat_cagr_5yr,
+    fr.free_cash_flow_cr,
+    fr.composite_quality_score
+
+    FROM peer_groups pg
+
+    JOIN companies c
+    ON pg.company_id = c.id
+
+LEFT JOIN financial_ratios fr
+    ON fr.company_id = c.id
+   AND fr.year = (
+        SELECT MAX(year)
+        FROM financial_ratios x
+        WHERE x.company_id = c.id
+   )
+
+WHERE pg.peer_group_name = ?
+
+ORDER BY c.company_name;
+    """
+
+    return run_query(query, params=(group_name,))
