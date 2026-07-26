@@ -9,8 +9,50 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📊 Nifty 100 Stock Screener")
-st.caption("Filter companies using financial ratios and quality metrics.")
+# ---------------------------------------------------
+# CUSTOM CSS
+# ---------------------------------------------------
+
+st.markdown(
+    """
+    <style>
+
+    .block-container{
+        max-width:1700px;
+        padding-top:1rem;
+    }
+
+    .hero{
+        background:linear-gradient(135deg,#172554,#1E3A8A,#1E293B);
+        padding:25px;
+        border-radius:20px;
+        color:white;
+        margin-bottom:25px;
+    }
+
+    .card{
+        background:#1E293B;
+        padding:24px;
+        border-radius:18px;
+        border:1px solid #334155;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown("""
+<div class="hero">
+
+<h1>📊 Nifty 100 Stock Screener</h1>
+
+<p>
+Filter companies using financial ratios and quality metrics.
+</p>
+
+</div>
+""", unsafe_allow_html=True)
 
 # -----------------------------------------------------
 # Load Data

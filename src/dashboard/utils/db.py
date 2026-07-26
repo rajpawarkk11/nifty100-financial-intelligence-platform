@@ -383,6 +383,85 @@ def get_sector_breakdown():
     """
     return run_query(query)
 
+@st.cache_data(ttl=600)
+def get_sector_analysis_data():
+    """
+    Returns latest financial data required for
+    Sector Analysis Dashboard.
+    """
+
+    query = """
+    WITH latest_financial AS (
+        SELECT
+            company_id,
+            MAX(year) AS latest_year
+        FROM financial_ratios
+        GROUP BY company_id
+    ),
+
+    latest_pl AS (
+        SELECT
+            company_id,
+            MAX(year) AS latest_year
+        FROM profitandloss
+        GROUP BY company_id
+    ),
+
+    latest_market AS (
+        SELECT
+            company_id,
+            MAX(year) AS latest_year
+        FROM market_cap
+        GROUP BY company_id
+    )
+
+    SELECT
+
+        c.id,
+        c.company_name,
+
+        s.broad_sector,
+        s.sub_sector,
+
+        pl.sales,
+
+        fr.return_on_equity_pct,
+
+        mc.market_cap_crore
+
+    FROM companies c
+
+    LEFT JOIN sectors s
+        ON c.id = s.company_id
+
+    LEFT JOIN latest_financial lf
+        ON c.id = lf.company_id
+
+    LEFT JOIN financial_ratios fr
+        ON fr.company_id = lf.company_id
+       AND fr.year = lf.latest_year
+
+    LEFT JOIN latest_pl lp
+        ON lp.company_id = c.id
+
+    LEFT JOIN profitandloss pl
+        ON pl.company_id = lp.company_id
+       AND pl.year = lp.latest_year
+
+    LEFT JOIN latest_market lm
+        ON lm.company_id = c.id
+
+    LEFT JOIN market_cap mc
+        ON mc.company_id = lm.company_id
+       AND mc.year = lm.latest_year
+
+    ORDER BY
+        broad_sector,
+        company_name;
+    """
+
+    return run_query(query)
+
 
 # --------------------------------------------------
 # Top Quality Companies
@@ -538,3 +617,39 @@ ORDER BY c.company_name;
     """
 
     return run_query(query, params=(group_name,))
+
+@st.cache_data(ttl=600)
+def get_all_financial_ratios():
+
+    query = """
+
+    WITH latest_year AS (
+
+        SELECT
+            company_id,
+            MAX(year) AS latest_year
+        FROM financial_ratios
+        GROUP BY company_id
+
+    )
+
+    SELECT
+
+        c.company_name,
+
+        fr.*
+
+    FROM companies c
+
+    JOIN latest_year ly
+        ON c.id = ly.company_id
+
+    JOIN financial_ratios fr
+        ON fr.company_id = ly.company_id
+       AND fr.year = ly.latest_year
+
+    ORDER BY c.company_name;
+
+    """
+
+    return run_query(query)

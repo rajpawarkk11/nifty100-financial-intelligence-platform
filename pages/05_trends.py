@@ -16,69 +16,49 @@ st.set_page_config(
     layout="wide",
 )
 
-st.markdown("""
-<style>
+# ---------------------------------------------------
+# CUSTOM CSS
+# ---------------------------------------------------
 
-.block-container{
-    padding-top:1.2rem;
-}
+st.markdown(
+    """
+    <style>
 
-.metric-card{
-    background:white;
-    border-radius:14px;
-    padding:18px;
-    box-shadow:0 3px 10px rgba(0,0,0,.08);
-    text-align:center;
-}
+    .block-container{
+        max-width:1700px;
+        padding-top:1rem;
+    }
 
-.metric-title{
-    color:#6b7280;
-    font-size:14px;
-}
+    .hero{
+        background:linear-gradient(135deg,#172554,#1E3A8A,#1E293B);
+        padding:25px;
+        border-radius:20px;
+        color:white;
+        margin-bottom:25px;
+    }
 
-.metric-value{
-    font-size:28px;
-    font-weight:700;
-    color:#0f172a;
-}
+    .card{
+        background:#1E293B;
+        padding:24px;
+        border-radius:18px;
+        border:1px solid #334155;
+    }
 
-.hero{
-    background:linear-gradient(135deg,#2563eb,#4f46e5);
-    padding:28px;
-    border-radius:18px;
-    color:white;
-    margin-bottom:20px;
-}
-
-div[data-testid="stMetric"]{
-    background:#1f2937;
-    border:1px solid #374151;
-    border-radius:14px;
-    padding:16px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.35);
-}
-
-div[data-testid="stMetricLabel"]{
-    color:#9CA3AF !important;
-    font-weight:600;
-}
-
-div[data-testid="stMetricValue"]{
-    color:#FFFFFF !important;
-    font-size:32px !important;
-    font-weight:700;
-}
-
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown("""
 <div class="hero">
+
 <h1>📈 Trend Analysis Dashboard</h1>
+
 <p>
-Analyze long-term financial trends, compare multiple business metrics,
-evaluate YoY growth, and download historical data.
+ Analyze long-term financial trends, compare key business metrics,
+        evaluate year-over-year growth, and explore historical company performance.
 </p>
+
 </div>
 """, unsafe_allow_html=True)
 
@@ -279,14 +259,42 @@ for metric in selected_metrics:
 
     column = metric_map[metric]
 
+    temp = trend_df[["year", column]].copy()
+
+    temp["YoY"] = (
+        temp[column]
+        .pct_change()
+        .mul(100)
+        .round(2)
+    )
+
+    annotations = []
+
+    for value in temp["YoY"]:
+
+        if pd.isna(value):
+            annotations.append("")
+
+        else:
+            annotations.append(f"{value:.1f}%")
+
     fig.add_trace(
         go.Scatter(
-            x=trend_df["year"],
-            y=trend_df[column],
-            mode="lines+markers",
+            x=temp["year"],
+            y=temp[column],
+
+            mode="lines+markers+text",
+
             name=metric,
+
+            text=annotations,
+
+            textposition="top center",
+
             line=dict(width=3),
+
             marker=dict(size=8),
+
             hovertemplate=
                 "<b>%{x}</b><br>"
                 + metric
@@ -665,4 +673,5 @@ st.divider()
 st.caption(
     "📈 Trend Analysis Dashboard | "
     "NIFTY 100 Financial Intelligence Platform | "
+
 )
