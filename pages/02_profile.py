@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import time
 
 from src.dashboard.utils.db import (
     get_companies,
@@ -10,6 +11,7 @@ from src.dashboard.utils.db import (
     get_cash_flow,
 )
 
+start = time.time()
 # ---------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------
@@ -433,5 +435,13 @@ with c3:
 )
     else:
         st.info("BSE Profile unavailable")
+
+        
+    end = time.time()
+
+st.caption(
+    f"Loaded in {end - start:.2f} seconds"
+)
+
 
 
